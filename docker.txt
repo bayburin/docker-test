@@ -1,0 +1,48 @@
+docker ps - работающие контейнеры
+docker ps -a - все контейнеры
+docker ps -a -q - только id контейнеров
+docker rm ID - удалить контейнер
+docker rm $(docker ps -qa) - удалить все контейнеры
+docker rmi - удалить image
+docker build -t orbita-ui -f Dockerfile.env .
+docker images (docker image ls) - список образов
+docker volume ls - список volumes
+docker logs ID - логи контейнера
+
+docker run -d -p 4200:4200 --name CONTAINER_NAME -p 8080:8080 IMAGE_NAME
+docker run --rm - запустить контейнер и удалить после остановки
+docker run -e TZ=Asia/Krasnoyarks - переменные окружения 
+docker run -v ABS_HOST_PATH:ABS_CONTAINER_PATH
+docker stop ID - остановить контейнер
+docker restart ID - перезапустить контейнер
+
+docker-compose -f docker-compose.yml -p orbita-dev-ui up -d --build
+docker-compose -p orbita-dev build
+docker-compose -p orbita-dev up  --detach
+docker-compose ps - список контейнеров
+docker-compose images - список образов
+
+Пересборка отдельно сервиса:
+  docker-compose stop -t 1 ui
+  docker-compose build ui
+  docker-compose up --no-start ui
+  docker-compose start ui
+
+FROM - базовый образ, с которого начинается сборка
+RUN - выполнить команду
+WORKDIR - перейти в каталог и начать выполнение команд из этого каталога
+COPY - копировать
+ADD - тоже самое + умеет скачивать файлы и разворачивать архивы
+CMD - что делать, когда запустится контейнер (запускается через shell)
+ENTRYPOINT - без shell
+EXPOSE - задеклорировать порт (просто мета-информация)
+ENV (ENV TZ=Asia/Krasnoyarsk) - переменные окружения
+
+
+docker build -t orbita-ui -f Dockerfile.dev .
+docker run -d --name orbita-ui -p 4200:4200 -v /home/ravil/Develop/local/orbita-ui:/app orbita-ui
+
+docker build -t orbita-ui-karma -f Dockerfile.test .
+docker run -d --rm --name orbita-ui-karma -p 9876:9876 -v /home/ravil/Develop/local/orbita-ui:/app orbita-ui-karma
+
+docker build -t orbita-dev -f Dockerfile.dev .
