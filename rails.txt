@@ -1,1 +1,1 @@
-rails new test-app --skip-test --skip-action-cable --skip-git --skip-action-mailer --skip-webpack-install --skip-javascript -d=mysql
+rails new test-app --skip-test --skip-action-cable --skip-git --skip-action-mailer --skip-webpack-install --skip-javascript -d=mysql --skip-bundle

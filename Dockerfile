@@ -45,6 +45,7 @@ ARG BUNDLER_VERSION
 RUN apk add --update --no-cache \
       binutils-gold \
       build-base \
+      mariadb-dev \
       curl \
       file \
       g++ \
@@ -62,6 +63,7 @@ RUN apk add --update --no-cache \
       netcat-openbsd \
       openssl \
       pkgconfig \
+      libc6-compat \
       tzdata
 
 RUN gem update --system && \

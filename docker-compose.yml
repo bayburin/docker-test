@@ -1,40 +1,70 @@
 version: "3.9"
 
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      RUBY_VERSION: "2.7.2"
+      BUNDLER_VERSION: "2.1.4"
+  volumes:
+    - ./test-app:/app
+    - gems:/usr/local/bundle/gems
+    - rails_cache:/app/tmp/cache
+  stdin_open: true
+  tty: true
+
 services:
   rails:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        RUBY_VERSION: "2.7.2"
-        BUNDLER_VERSION: "2.1.4"
-    stdin_open: true
-    tty: true
+    <<: *backend
     restart: unless-stopped
     ports:
       - "3000:3000"
     expose:
       - 3000
-    volumes:
-      - ./test-app:/app:cached
-      - gems:/usr/local/bundle/gems
-      - rails_cache:/app/tmp/cache
     depends_on:
       - mysql
+      - redis
     command: bundle exec rails server -b 0.0.0.0
 
   mysql:
     image: mysql:5.7
     volumes:
       - mysql:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root_pwd
-    # env_file: ./test-app/.env
+    env_file: ./test-app/.env
     restart: always
 
+  redis:
+    image: redis:5.0
+    volumes:
+      - redis:/data
+    restart: always
+
+  sidekiq:
+    <<: *backend
+    restart: unless-stopped
+    depends_on: 
+      - redis
+    command: bundle exec sidekiq -C config/sidekiq.yml
+
+  ws:
+    image: anycable/anycable-go
+    ports:
+      - "8080:8080"
+    depends_on: 
+      - redis
+  
+  anycable:
+    <<: *backend
+    depends_on: 
+      - ws
+      - rails
+    command: bundle exec anycable
+    
 volumes:
   rails_cache:
   gems:
   mysql:
+  redis:
 
 # /usr/local/lib/ruby/site_ruby/2.7.0/bundler.rb
