@@ -6,11 +6,13 @@ x-backend: &backend
     dockerfile: Dockerfile
     args:
       RUBY_VERSION: "2.7.2"
-      BUNDLER_VERSION: "2.1.4"
+      BUNDLER_VERSION: "2.2.6"
   volumes:
     - ./test-app:/app
     - gems:/usr/local/bundle/gems
     - rails_cache:/app/tmp/cache
+  environment:
+    - BOOTSNAP_CACHE_DIR=/usr/local/bundle/_bootsnap
   stdin_open: true
   tty: true
 
@@ -26,45 +28,93 @@ services:
       - mysql
       - redis
     command: bundle exec rails server -b 0.0.0.0
+    networks:
+      - backend
 
   mysql:
     image: mysql:5.7
     volumes:
       - mysql:/var/lib/mysql
     env_file: ./test-app/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: "root_pwd"
     restart: always
+    networks:
+      - backend
 
   redis:
     image: redis:5.0
     volumes:
       - redis:/data
     restart: always
+    networks:
+      - backend
 
   sidekiq:
     <<: *backend
     restart: unless-stopped
-    depends_on: 
+    depends_on:
       - redis
+    networks:
+      - backend
     command: bundle exec sidekiq -C config/sidekiq.yml
 
+  # ws:
+  #   image: anycable/anycable-go:1.0.3-alpine
+  #   environment:
+  #     ANYCABLE_RPC_HOST: anycable:50051
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - backend
+
+  # TODO: Разобраться с PORTS
+  # TODO: Выполнить bundle exec rails g anycable:setup
+  # anycable:
+  #   <<: *backend
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - backend
+  #   command: bundle exec anycable
+
   ws:
-    image: anycable/anycable-go
+    image: anycable/anycable-go:1.0.3-alpine
     ports:
-      - "8080:8080"
-    depends_on: 
+      - '8080:8080'
+    environment:
+      ANYCABLE_HOST: "0.0.0.0"
+      # TODO: Заменить на REDIS_URL=${REDIS_URL}0 ?
+      ANYCABLE_REDIS_URL: redis://redis:6379/0
+      ANYCABLE_RPC_HOST: anycable:50051
+      ANYCABLE_DEBUG: 1
+    depends_on:
       - redis
-  
+    networks:
+      - backend
+
   anycable:
     <<: *backend
-    depends_on: 
+    environment:
+      # TODO: Заменить на REDIS_URL=${REDIS_URL}0 ?
+      ANYCABLE_REDIS_URL: redis://redis:6379/0
+      ANYCABLE_RPC_HOST: 0.0.0.0:50051
+      ANYCABLE_DEBUG: 1
+    ports:
+      - '50051'
+    depends_on:
       - ws
-      - rails
+    networks:
+      - backend
     command: bundle exec anycable
-    
+
 volumes:
   rails_cache:
   gems:
   mysql:
   redis:
+
+networks:
+  backend:
 
 # /usr/local/lib/ruby/site_ruby/2.7.0/bundler.rb
