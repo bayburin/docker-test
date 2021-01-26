@@ -45,6 +45,8 @@ COPY ./test-app/Gemfile ./test-app/Gemfile.lock ./
 
 RUN bundle install
 
+STOPSIGNAL SIGTERM
+
 # ENTRYPOINT [ "ls", "-l", "/usr/local/bundle/gems" ]
 
 # ENTRYPOINT [ "gem", "which", "activesupport" ]

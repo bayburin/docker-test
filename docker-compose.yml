@@ -59,36 +59,12 @@ services:
       - backend
     command: bundle exec sidekiq -C config/sidekiq.yml
 
-  # ws:
-  #   image: anycable/anycable-go:1.0.3-alpine
-  #   environment:
-  #     ANYCABLE_RPC_HOST: anycable:50051
-  #   depends_on:
-  #     - redis
-  #   networks:
-  #     - backend
-
-  # TODO: Разобраться с PORTS
-  # TODO: Выполнить bundle exec rails g anycable:setup
-  # anycable:
-  #   <<: *backend
-  #   depends_on:
-  #     - redis
-  #   networks:
-  #     - backend
-  #   command: bundle exec anycable
-
   ws:
     image: anycable/anycable-go:1.0.3-alpine
     ports:
       - "8080:8080"
-    # env_file: ./test-app/.env
     environment:
-      # no_proxy: '${no_proxy},redis'
-      # NO_PROXY: '${no_proxy},redis'
       ANYCABLE_HOST: "0.0.0.0"
-      # ANYCABLE_REDIS_URL: redis://redis:6379/0
-      # REDIS_URL: redis://redis:6379/0
       ANYCABLE_REDIS_URL: ${REDIS_URL}0
       ANYCABLE_RPC_HOST: anycable:50051
       ANYCABLE_DEBUG: 1
@@ -100,10 +76,7 @@ services:
 
   anycable:
     <<: *backend
-    # env_file: ./test-app/.env
     environment:
-      # TODO: Заменить на REDIS_URL=${REDIS_URL}0 ?
-      # ANYCABLE_REDIS_URL: redis://redis:6379/0
       ANYCABLE_REDIS_URL: ${REDIS_URL}0
       ANYCABLE_RPC_HOST: 0.0.0.0:50051
       ANYCABLE_DEBUG: 1
@@ -124,5 +97,3 @@ volumes:
 
 networks:
   backend:
-
-# /usr/local/lib/ruby/site_ruby/2.7.0/bundler.rb
